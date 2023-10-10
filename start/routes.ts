@@ -20,6 +20,11 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 
-Route.get('/', async () => {
-  return { hello: 'world' }
-})
+Route.group(() => {
+  Route.group(() => {
+    Route.group(() => {
+      Route.get('/', 'TasksController.index')
+      Route.post('/', 'TasksController.create')
+    }).prefix('/tasks')
+  }).prefix('/v1')
+}).prefix('/api')
