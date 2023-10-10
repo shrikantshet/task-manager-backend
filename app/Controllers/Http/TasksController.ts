@@ -98,4 +98,67 @@ export default class TasksController {
       message: null,
     })
   }
+  public async monthWiseMetrics({ response }: HttpContextContract) {
+    const statusWiseMetrics: {
+      [status: string]: {
+        month_year: string
+        [status_count: string]: string // key is status, value is count of that status but in string
+      }[]
+    } = {}
+    const statuses = Object.values(TaskStatus)
+    for (const status of statuses) {
+      const metrics = await Database.rawQuery(
+        `
+          SELECT
+            TO_CHAR(created_at, 'Month YYYY') AS month_year,
+            COUNT(*) FILTER (WHERE status = ?) AS ${status}
+          FROM tasks
+          GROUP BY month_year
+          ORDER BY month_year DESC
+        `,
+        [status]
+      )
+
+      // @ts-ignore-next-line
+      statusWiseMetrics[status] = metrics.rows as {
+        month_year: string
+        [status_count: string]: string // key is status, value is count of that status but in string
+      }[]
+    }
+
+    const monthYearCombinationArrays = Object.values(statusWiseMetrics).map((i) =>
+      i.map((j: { month_year: string; [status_count: string]: string }) => j.month_year)
+    )
+    const monthYearCombinations = Array.from(
+      new Set(monthYearCombinationArrays.reduce((a, b) => a.concat(b), []))
+    )
+    const sortedMonthYearCombinations = monthYearCombinations.sort((a, b) => {
+      const aDate = new Date(a as string)
+      const bDate = new Date(b as string)
+      return aDate.getTime() - bDate.getTime()
+    })
+
+    const finalMetrics: { date: string; metrics: { [statusKey: string]: number } }[] = []
+
+    sortedMonthYearCombinations.map((monthYear) => {
+      const metrics = {}
+      Object.keys(statusWiseMetrics).map((currentStatus) => {
+        const relevantStat = statusWiseMetrics[currentStatus].find(
+          (item) => item.month_year === monthYear
+        )
+        metrics[`${currentStatus.replace('_', '')}_tasks`] = relevantStat?.[currentStatus] || 0
+      })
+      finalMetrics.push({
+        date: monthYear as string,
+        metrics,
+      })
+    })
+
+    return response.status(200).send({
+      data: {
+        metrics: finalMetrics,
+      },
+      message: null,
+    })
+  }
 }
