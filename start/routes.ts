@@ -25,6 +25,8 @@ Route.group(() => {
     Route.group(() => {
       Route.get('/', 'TasksController.index')
       Route.post('/', 'TasksController.create')
+      Route.put('/:id', 'TasksController.update')
+      Route.get('/count', 'TasksController.count')
     }).prefix('/tasks')
   }).prefix('/v1')
 }).prefix('/api')
