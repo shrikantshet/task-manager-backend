@@ -19,3 +19,6 @@ NodeJS Version
 5. Run `node ace migration:run` to run migrations
 6. Optional Step - Run `node ace db:seed` to seed the database with some sample data
 7. Run `node ace serve --watch` to start the local server
+
+## Postman Collection
+`Tasks.postman_collection.json` is the postman collection to test the APIs
